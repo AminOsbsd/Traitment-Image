@@ -58,7 +58,8 @@ def main(input_folder, output_folder):
 
 
 if __name__ == "__main__":
-    input_folder = '/home/khouloud/Desktop/SEA/Input/'
-    output_folder = '/home/khouloud/Desktop/SEA/Output/mono'
+    input_folder = '/home/aminos/Images'
+    output_folder = '/home/aminos/output/multi'
     main(input_folder, output_folder)
+
 
