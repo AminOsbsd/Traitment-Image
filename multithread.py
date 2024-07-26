@@ -2,11 +2,10 @@ import os
 import time
 import pytesseract
 from PIL import Image
-import concurrent.futures
 import threading
 
 # Configure pytesseract to use the Tesseract executable
-pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract' 
+pytesseract.pytesseract.tesseract_cmd = r'/usr/bin/tesseract'
 
 def load_images_from_folder(folder):
     """Load images from a specified folder."""
@@ -22,34 +21,17 @@ def load_images_from_folder(folder):
                 print(f"Error loading image {img_path}: {e}")
     return images
 
-lock = threading.Lock()
-
-def process_image(image_data):
+def process_image(image_data, results, lock):
     """Process a single image to extract text."""
     filename, img = image_data
     try:
         text = pytesseract.image_to_string(img)
-        with lock: 
-            
-            pass
-        return filename, text
+        with lock:
+            results.append((filename, text))
     except Exception as e:
         print(f"Error processing image {filename}: {e}")
-        return filename, ""
-
-def process_images_in_parallel(images):
-    """Process multiple images concurrently using multithreading."""
-    num_workers = min(4, len(images))
-    results = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-        future_to_image = {executor.submit(process_image, image_data): image_data for image_data in images}
-        for future in concurrent.futures.as_completed(future_to_image):
-            try:
-                result = future.result()
-                results.append(result)
-            except Exception as e:
-                print(f"Error during processing: {e}")
-    return results
+        with lock:
+            results.append((filename, ""))
 
 def save_results(results, output_folder):
     """Save the extracted text results to files in the specified output folder."""
@@ -69,7 +51,18 @@ def main(input_folder, output_folder):
     images = load_images_from_folder(input_folder)
     print(f"Loaded {len(images)} images.")
     
-    results = process_images_in_parallel(images)
+    results = []
+    threads = []
+    lock = threading.Lock()
+    
+    for image in images:
+        thread = threading.Thread(target=process_image, args=(image, results, lock))
+        threads.append(thread)
+        thread.start()
+    
+    for thread in threads:
+        thread.join()
+    
     print(f"Processed {len(results)} images.")
     
     save_results(results, output_folder)
@@ -79,7 +72,6 @@ def main(input_folder, output_folder):
 
 
 if __name__ == "__main__":
-    input_folder = '/home/khouloud/Desktop/SEA/Input/'
-    output_folder = '/home/khouloud/Desktop/SEA/Output/multi/'
+    input_folder = '/home/aminos/Images'
+    output_folder = '/home/aminos/output/multi'
     main(input_folder, output_folder)
-
