@@ -50,7 +50,7 @@ def main(input_folder, output_folder):
     
     results = [process_image(image) for image in images]
     print(f"Processed {len(results)} images.")
-    time.sleep(5)
+    
     save_results(results, output_folder)
     
     end_time = time.time()
